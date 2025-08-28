@@ -28,6 +28,7 @@ export default function Home() {
   const [downloadingM4AEpisodes, setDownloadingM4AEpisodes] = useState<Set<string>>(new Set());
   const [showCleanupInfo, setShowCleanupInfo] = useState(false);
   const [cleanupInfo, setCleanupInfo] = useState<any>(null);
+  const [loadAll, setLoadAll] = useState(false);
 
   const fetchCleanupInfo = async () => {
     try {
@@ -158,7 +159,10 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ 
+          url,
+          loadAll
+        }),
       });
 
       const data = await response.json();
@@ -205,22 +209,37 @@ export default function Home() {
         </div>
 
         <form onSubmit={handleSubmit} className="mb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.mixcloud.com/username/"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Cargando..." : "Obtener Episodios"}
-            </button>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://www.mixcloud.com/username/"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Cargando..." : "Obtener Episodios"}
+              </button>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                id="loadAll"
+                type="checkbox"
+                checked={loadAll}
+                onChange={(e) => setLoadAll(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+              />
+              <label htmlFor="loadAll" className="text-sm font-medium text-gray-700">
+                Cargar todos los episodios (puede tardar más tiempo)
+              </label>
+            </div>
           </div>
         </form>
 

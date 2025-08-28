@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { url } = await req.json();
+    const { url, loadAll = false, offset = 0, limit = 20 } = await req.json();
 
     if (!url) {
       return NextResponse.json(
@@ -23,30 +23,80 @@ export async function POST(req: NextRequest) {
     }
 
     const username = match[1];
+    let allEpisodes: any[] = [];
+    let hasMore = true;
+    let currentOffset = offset;
+    let totalFetched = 0;
 
-    // Consultar la API de Mixcloud
-    const mixcloudApiUrl = `https://api.mixcloud.com/${username}/cloudcasts/`;
-    
-    const response = await fetch(mixcloudApiUrl, {
-      headers: {
-        'User-Agent': 'MixcloudScraper/1.0',
-      },
-    });
+    console.log(`🔍 Obteniendo episodios para: ${username}`);
+    console.log(`📄 Modo: ${loadAll ? 'Todos los episodios' : 'Paginado'}, Offset: ${offset}, Limit: ${limit}`);
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        return NextResponse.json(
-          { error: "Usuario no encontrado en Mixcloud" },
-          { status: 404 }
-        );
+    if (loadAll) {
+      // Cargar TODOS los episodios (puede tardar)
+      while (hasMore && totalFetched < 1000) { // Límite de seguridad
+        const mixcloudApiUrl = `https://api.mixcloud.com/${username}/cloudcasts/?offset=${currentOffset}&limit=50`;
+        
+        console.log(`📡 Fetching: ${mixcloudApiUrl}`);
+        
+        const response = await fetch(mixcloudApiUrl, {
+          headers: {
+            'User-Agent': 'MixcloudScraper/1.0',
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            return NextResponse.json(
+              { error: "Usuario no encontrado en Mixcloud" },
+              { status: 404 }
+            );
+          }
+          throw new Error(`Error de Mixcloud API: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+          allEpisodes.push(...data.data);
+          totalFetched += data.data.length;
+          currentOffset += data.data.length;
+          hasMore = data.paging && data.paging.next;
+          
+          console.log(`📊 Obtenidos: ${data.data.length}, Total: ${totalFetched}`);
+        } else {
+          hasMore = false;
+        }
+
+        // Pequeña pausa para no saturar la API
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-      throw new Error(`Error de Mixcloud API: ${response.status}`);
+    } else {
+      // Cargar una página específica
+      const mixcloudApiUrl = `https://api.mixcloud.com/${username}/cloudcasts/?offset=${offset}&limit=${limit}`;
+      
+      const response = await fetch(mixcloudApiUrl, {
+        headers: {
+          'User-Agent': 'MixcloudScraper/1.0',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return NextResponse.json(
+            { error: "Usuario no encontrado en Mixcloud" },
+            { status: 404 }
+          );
+        }
+        throw new Error(`Error de Mixcloud API: ${response.status}`);
+      }
+
+      const data = await response.json();
+      allEpisodes = data.data || [];
+      hasMore = data.paging && data.paging.next;
     }
 
-    const data = await response.json();
-
     // Transformar los datos para el frontend
-    const episodes = data.data.map((episode: any) => ({
+    const episodes = allEpisodes.map((episode: any) => ({
       key: episode.key,
       name: episode.name,
       url: episode.url,
