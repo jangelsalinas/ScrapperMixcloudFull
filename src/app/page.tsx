@@ -535,7 +535,7 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
               {episodes.map((episode) => (
                 <div
                   key={episode.key}
-                  className="bg-white bg-opacity-95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl hover:bg-opacity-100 transition-all duration-300 transform hover:scale-105 border border-green-200"
+                  className="bg-white bg-opacity-95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl hover:bg-opacity-100 transition-all duration-300 transform hover:scale-105 hover:brightness-110 border border-green-200"
                 >
                   <div className="relative">
                     <img
