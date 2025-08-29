@@ -29,6 +29,9 @@ export default function Home() {
   const [showCleanupInfo, setShowCleanupInfo] = useState(false);
   const [cleanupInfo, setCleanupInfo] = useState<any>(null);
   const [loadAll, setLoadAll] = useState(false);
+  const [allEpisodesLoaded, setAllEpisodesLoaded] = useState(false);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [bulkDownloadProgress, setBulkDownloadProgress] = useState("");
 
   const fetchCleanupInfo = async () => {
     try {
@@ -147,11 +150,85 @@ export default function Home() {
     }
   };
 
+  const handleBulkDownload = async () => {
+    // Confirmación del usuario
+    const confirmMessage = `¿Estás seguro de que quieres descargar TODOS los ${episodes.length} episodios en formato M4A?
+
+Esta operación puede tardar mucho tiempo (aproximadamente ${Math.ceil(episodes.length * 0.5)} minutos) y consumir mucho espacio en disco.
+
+Los archivos se empaquetarán en un archivo ZIP sin comprimir.
+
+¿Continuar?`;
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setBulkDownloading(true);
+    setBulkDownloadProgress("Iniciando descarga masiva...");
+
+    try {
+      // Extraer username de la URL
+      const urlPattern = /https?:\/\/(?:www\.)?mixcloud\.com\/([^\/]+)\/?/;
+      const match = url.match(urlPattern);
+      const username = match ? match[1] : "unknown";
+
+      const response = await fetch("/api/download-all", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          episodes,
+          username
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error en descarga masiva");
+      }
+
+      setBulkDownloadProgress("¡Descarga masiva completada! Preparando descarga...");
+
+      // Crear enlace para descargar el archivo ZIP
+      const link = document.createElement('a');
+      link.href = data.downloadUrl;
+      link.download = data.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      const successMessage = `🎉 ¡Descarga masiva completada!
+
+📊 Estadísticas:
+• Total de episodios: ${data.totalEpisodes}
+• Descargas exitosas: ${data.successfulDownloads}
+• Descargas fallidas: ${data.failedDownloads}
+• Tamaño del ZIP: ${data.zipSizeMB} MB
+
+📁 Archivo: ${data.filename}
+
+${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedList.join('\n')}` : ''}`;
+
+      alert(successMessage);
+
+    } catch (err) {
+      console.error("Error en descarga masiva:", err);
+      alert(`Error en descarga masiva: ${err instanceof Error ? err.message : "Error desconocido"}`);
+    } finally {
+      setBulkDownloading(false);
+      setBulkDownloadProgress("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setEpisodes([]);
+    setAllEpisodesLoaded(false);
 
     try {
       const response = await fetch("/api/mixcloud", {
@@ -172,6 +249,7 @@ export default function Home() {
       }
 
       setEpisodes(data.episodes || []);
+      setAllEpisodesLoaded(loadAll); // Marcar si se cargaron todos
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -317,9 +395,37 @@ export default function Home() {
 
         {episodes.length > 0 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Episodios encontrados ({episodes.length})
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Episodios encontrados ({episodes.length})
+              </h2>
+              
+              {allEpisodesLoaded && episodes.length > 1 && (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {bulkDownloading && (
+                    <div className="text-sm text-blue-600 font-medium">
+                      {bulkDownloadProgress}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleBulkDownload}
+                    disabled={bulkDownloading}
+                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {bulkDownloading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Descargando...
+                      </>
+                    ) : (
+                      <>
+                        📦 Descargar Todos (ZIP)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {episodes.map((episode) => (
                 <div

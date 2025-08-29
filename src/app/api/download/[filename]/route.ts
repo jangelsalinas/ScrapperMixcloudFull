@@ -4,10 +4,11 @@ import fs from "fs";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const filename = decodeURIComponent(params.filename);
+    const { filename: encodedFilename } = await params;
+    const filename = decodeURIComponent(encodedFilename);
     const filePath = path.join(process.cwd(), "downloads", filename);
 
     // Verificar que el archivo existe
@@ -18,8 +19,8 @@ export async function GET(
       );
     }
 
-    // Verificar que es un archivo de audio permitido
-    if (!filename.endsWith('.mp3') && !filename.endsWith('.m4a')) {
+    // Verificar que es un archivo permitido
+    if (!filename.endsWith('.mp3') && !filename.endsWith('.m4a') && !filename.endsWith('.zip')) {
       return NextResponse.json(
         { error: "Tipo de archivo no permitido" },
         { status: 403 }
@@ -30,7 +31,16 @@ export async function GET(
     const fileBuffer = fs.readFileSync(filePath);
 
     // Determinar el tipo MIME correcto
-    const contentType = filename.endsWith('.mp3') ? 'audio/mpeg' : 'audio/mp4';
+    let contentType: string;
+    if (filename.endsWith('.mp3')) {
+      contentType = 'audio/mpeg';
+    } else if (filename.endsWith('.m4a')) {
+      contentType = 'audio/mp4';
+    } else if (filename.endsWith('.zip')) {
+      contentType = 'application/zip';
+    } else {
+      contentType = 'application/octet-stream';
+    }
 
     // Crear respuesta con headers apropiados
     const response = new NextResponse(fileBuffer, {
