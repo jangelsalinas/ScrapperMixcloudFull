@@ -311,130 +311,182 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Mixcloud Episode Scraper
-          </h1>
-          <p className="text-lg text-gray-600">
-            Introduce una URL de usuario de Mixcloud para obtener sus episodios
-          </p>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Fondo con gradiente verde musical */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-700 to-emerald-800"></div>
+      
+      {/* Patrón de ondas musicales de fondo */}
+      <div className="absolute inset-0 opacity-10">
+        <svg className="w-full h-full" viewBox="0 0 400 400" fill="none">
+          {/* Ondas musicales */}
+          <path d="M0,100 Q100,50 200,100 T400,100" stroke="white" strokeWidth="2" fill="none"/>
+          <path d="M0,150 Q100,100 200,150 T400,150" stroke="white" strokeWidth="1.5" fill="none"/>
+          <path d="M0,200 Q100,150 200,200 T400,200" stroke="white" strokeWidth="1" fill="none"/>
+          <path d="M0,250 Q100,200 200,250 T400,250" stroke="white" strokeWidth="1.5" fill="none"/>
+          <path d="M0,300 Q100,250 200,300 T400,300" stroke="white" strokeWidth="2" fill="none"/>
+          
+          {/* Notas musicales flotantes */}
+          <circle cx="50" cy="80" r="8" fill="white" opacity="0.3"/>
+          <circle cx="150" cy="120" r="6" fill="white" opacity="0.4"/>
+          <circle cx="250" cy="90" r="10" fill="white" opacity="0.2"/>
+          <circle cx="350" cy="130" r="7" fill="white" opacity="0.3"/>
+          
+          <circle cx="80" cy="280" r="6" fill="white" opacity="0.3"/>
+          <circle cx="180" cy="320" r="8" fill="white" opacity="0.2"/>
+          <circle cx="280" cy="270" r="9" fill="white" opacity="0.4"/>
+          <circle cx="320" cy="310" r="5" fill="white" opacity="0.3"/>
+        </svg>
+      </div>
+
+      {/* Elementos decorativos de audio */}
+      <div className="absolute top-20 left-10 text-white opacity-20 text-6xl">🎵</div>
+      <div className="absolute top-40 right-20 text-white opacity-15 text-4xl">🎧</div>
+      <div className="absolute bottom-20 left-20 text-white opacity-25 text-5xl">📻</div>
+      <div className="absolute bottom-40 right-10 text-white opacity-20 text-3xl">🎶</div>
+      
+      {/* Contenido principal */}
+      <div className="relative z-10 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header con diseño mejorado */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white bg-opacity-20 rounded-full mb-6 backdrop-blur-sm">
+              <span className="text-4xl">🎵</span>
+            </div>
+            <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+              Mixcloud Episode Scraper
+            </h1>
+            <p className="text-xl text-green-100 max-w-2xl mx-auto leading-relaxed">
+              Descarga todos tus episodios favoritos de Mixcloud en alta calidad
+            </p>
+          </div>
+
+          {/* Formulario con estilo glassmorphism */}
+          <form onSubmit={handleSubmit} className="mb-8">
+            <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-6 border border-white border-opacity-30 shadow-2xl">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://www.mixcloud.com/username/"
+                    className="flex-1 px-4 py-3 bg-white bg-opacity-90 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-transparent placeholder-gray-500 text-gray-900 backdrop-blur-sm"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transform transition hover:scale-105 shadow-lg"
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Cargando...
+                      </div>
+                    ) : (
+                      "🎵 Obtener Episodios"
+                    )}
+                  </button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="loadAll"
+                    type="checkbox"
+                    checked={loadAll}
+                    onChange={(e) => setLoadAll(e.target.checked)}
+                    className="w-4 h-4 text-green-600 bg-white bg-opacity-90 border-green-300 rounded focus:ring-green-500 focus:ring-2"
+                  />
+                  <label htmlFor="loadAll" className="text-sm font-medium text-white drop-shadow">
+                    🔄 Cargar todos los episodios (puede tardar más tiempo)
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          {/* Sección de información de limpieza */}
+          <div className="mb-8">
+            <button
+              onClick={() => {
+                setShowCleanupInfo(!showCleanupInfo);
+                if (!showCleanupInfo && !cleanupInfo) {
+                  fetchCleanupInfo();
+                }
+              }}
+              className="text-sm text-green-100 hover:text-white underline transition-colors backdrop-blur-sm bg-white bg-opacity-10 px-3 py-1 rounded-full"
+            >
+              {showCleanupInfo ? "🔒 Ocultar" : "📁 Mostrar"} información de archivos temporales
+            </button>
+          
+            {showCleanupInfo && (
+              <div className="mt-4 p-6 bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-xl shadow-xl">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  📁 Gestión de Archivos Temporales
+                </h3>
+              
+                {cleanupInfo ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-green-100">
+                      <div className="bg-green-800 bg-opacity-30 p-2 rounded">
+                        <span className="font-medium">Archivos:</span> {cleanupInfo.downloadDir.fileCount}
+                      </div>
+                      <div className="bg-green-800 bg-opacity-30 p-2 rounded">
+                        <span className="font-medium">Tamaño total:</span> {cleanupInfo.downloadDir.totalSizeMB} MB
+                      </div>
+                      <div className="bg-green-800 bg-opacity-30 p-2 rounded">
+                        <span className="font-medium">Límite archivos:</span> {cleanupInfo.cleanupPolicy.maxFiles}
+                      </div>
+                      <div className="bg-green-800 bg-opacity-30 p-2 rounded">
+                        <span className="font-medium">Límite tamaño:</span> {cleanupInfo.cleanupPolicy.maxSizeMB} MB
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-green-100 bg-green-800 bg-opacity-20 p-3 rounded">
+                      <p>🕐 Los archivos se eliminan automáticamente después de {cleanupInfo.cleanupPolicy.maxAgeMinutes} minutos</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={fetchCleanupInfo}
+                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-all transform hover:scale-105"
+                      >
+                        🔄 Actualizar
+                      </button>
+                      <button
+                        onClick={performCleanup}
+                        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-all transform hover:scale-105"
+                      >
+                        🧹 Limpiar ahora
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-300 mx-auto"></div>
+                    <p className="text-sm text-green-100 mt-2">Cargando información...</p>
+                  </div>
+                )}
+              </div>
+            )}
         </div>
 
-        <form onSubmit={handleSubmit} className="mb-8">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://www.mixcloud.com/username/"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Cargando..." : "Obtener Episodios"}
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                id="loadAll"
-                type="checkbox"
-                checked={loadAll}
-                onChange={(e) => setLoadAll(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-              />
-              <label htmlFor="loadAll" className="text-sm font-medium text-gray-700">
-                Cargar todos los episodios (puede tardar más tiempo)
-              </label>
-            </div>
-          </div>
-        </form>
-
-        {/* Sección de información de limpieza */}
-        <div className="mb-8">
-          <button
-            onClick={() => {
-              setShowCleanupInfo(!showCleanupInfo);
-              if (!showCleanupInfo && !cleanupInfo) {
-                fetchCleanupInfo();
-              }
-            }}
-            className="text-sm text-gray-600 hover:text-gray-800 underline"
-          >
-            {showCleanupInfo ? "Ocultar" : "Mostrar"} información de archivos temporales
-          </button>
-          
-          {showCleanupInfo && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                📁 Gestión de Archivos Temporales
-              </h3>
-              
-              {cleanupInfo ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Archivos:</span> {cleanupInfo.downloadDir.fileCount}
-                    </div>
-                    <div>
-                      <span className="font-medium">Tamaño total:</span> {cleanupInfo.downloadDir.totalSizeMB} MB
-                    </div>
-                    <div>
-                      <span className="font-medium">Límite archivos:</span> {cleanupInfo.cleanupPolicy.maxFiles}
-                    </div>
-                    <div>
-                      <span className="font-medium">Límite tamaño:</span> {cleanupInfo.cleanupPolicy.maxSizeMB} MB
-                    </div>
-                  </div>
-                  
-                  <div className="text-sm text-gray-600">
-                    <p>🕐 Los archivos se eliminan automáticamente después de {cleanupInfo.cleanupPolicy.maxAgeMinutes} minutos</p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={fetchCleanupInfo}
-                      className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                    >
-                      🔄 Actualizar
-                    </button>
-                    <button
-                      onClick={performCleanup}
-                      className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-                    >
-                      🧹 Limpiar ahora
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-gray-600 mt-2">Cargando información...</p>
-                </div>
-              )}
+          {error && (
+            <div className="mb-8 p-4 bg-red-500 bg-opacity-20 border border-red-400 border-opacity-50 text-red-100 rounded-xl backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <span>❌</span>
+                {error}
+              </div>
             </div>
           )}
-        </div>
 
-        {error && (
-          <div className="mb-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {episodes.length > 0 && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Episodios encontrados ({episodes.length})
-              </h2>
+          {episodes.length > 0 && (
+            <div className="space-y-6">
+              <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-6 border border-white border-opacity-30 shadow-2xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                    🎶 Episodios encontrados <span className="bg-green-500 text-white px-3 py-1 rounded-full text-lg">({episodes.length})</span>
+                  </h2>
               
               {allEpisodesLoaded && episodes.length > 1 && (
                 <div className="flex flex-col sm:flex-row gap-2">
@@ -469,7 +521,7 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
                     
                     {/* Indicador de progreso adicional debajo del botón */}
                     {bulkDownloading && (
-                      <div className="mt-1 text-xs text-gray-600 text-center">
+                      <div className="mt-1 text-xs text-green-100 text-center backdrop-blur-sm bg-white bg-opacity-10 rounded px-2 py-1">
                         {bulkDownloadProgress}
                       </div>
                     )}
@@ -477,29 +529,37 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
                 </div>
               )}
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            
+            {/* Grid de episodios con tema musical - Espaciado aumentado para evitar solapamiento */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
               {episodes.map((episode) => (
                 <div
                   key={episode.key}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  className="bg-white bg-opacity-95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl hover:bg-opacity-100 transition-all duration-300 transform hover:scale-105 border border-green-200"
                 >
-                  <img
-                    src={episode.pictures.medium}
-                    alt={episode.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                      {episode.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Por {episode.user.name}
-                    </p>
-                    <div className="flex justify-between text-xs text-gray-500 mb-2">
-                      <span>{formatDate(episode.created_time)}</span>
-                      <span>{formatDuration(episode.audio_length)}</span>
+                  <div className="relative">
+                    <img
+                      src={episode.pictures.medium}
+                      alt={episode.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                    <div className="absolute bottom-2 left-2 text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
+                      🎵 {formatDuration(episode.audio_length)}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 mb-3">
+                  </div>
+                  
+                  <div className="p-4 bg-gradient-to-b from-white to-green-50">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                      🎧 {episode.name}
+                    </h3>
+                    <p className="text-sm text-green-600 mb-2 font-medium">
+                      👨‍🎤 {episode.user.name}
+                    </p>
+                    <div className="flex justify-between text-xs text-gray-600 mb-2">
+                      <span>📅 {formatDate(episode.created_time)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-600 mb-3 bg-green-100 p-2 rounded">
                       <span>▶ {episode.play_count.toLocaleString()}</span>
                       <span>❤ {episode.favorite_count.toLocaleString()}</span>
                       <span>💬 {episode.comment_count.toLocaleString()}</span>
@@ -509,31 +569,45 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
                         href={episode.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block w-full text-center px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                        className="inline-block w-full text-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105 shadow-md"
                       >
-                        Ver en Mixcloud
+                        🌐 Ver en Mixcloud
                       </a>
                       <button
                         onClick={() => handleDownload(episode)}
                         disabled={downloadingEpisodes.has(episode.key)}
-                        className={`inline-block w-full text-center px-4 py-2 text-white rounded transition-colors ${
+                        className={`inline-block w-full text-center px-4 py-2 text-white rounded-lg transition-all transform hover:scale-105 shadow-md ${
                           downloadingEpisodes.has(episode.key)
                             ? 'bg-gray-500 cursor-not-allowed'
-                            : 'bg-green-500 hover:bg-green-600'
+                            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
                         }`}
                       >
-                        {downloadingEpisodes.has(episode.key) ? 'Descargando...' : 'Descargar MP3'}
+                        {downloadingEpisodes.has(episode.key) ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Descargando...
+                          </div>
+                        ) : (
+                          '🎵 Descargar MP3'
+                        )}
                       </button>
                       <button
                         onClick={() => handleDownloadM4A(episode)}
                         disabled={downloadingM4AEpisodes.has(episode.key)}
-                        className={`inline-block w-full text-center px-4 py-2 text-white rounded transition-colors ${
+                        className={`inline-block w-full text-center px-4 py-2 text-white rounded-lg transition-all transform hover:scale-105 shadow-md ${
                           downloadingM4AEpisodes.has(episode.key)
                             ? 'bg-gray-500 cursor-not-allowed'
-                            : 'bg-blue-500 hover:bg-blue-600'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
                         }`}
                       >
-                        {downloadingM4AEpisodes.has(episode.key) ? 'Descargando...' : 'Descargar M4A'}
+                        {downloadingM4AEpisodes.has(episode.key) ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Descargando...
+                          </div>
+                        ) : (
+                          '🎧 Descargar M4A'
+                        )}
                       </button>
                     </div>
                   </div>
@@ -541,15 +615,20 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
               ))}
             </div>
           </div>
+          </div>
         )}
 
         {!loading && episodes.length === 0 && !error && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">
-              Introduce una URL de Mixcloud para comenzar
-            </p>
+          <div className="text-center py-12 text-white">
+            <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-8 border border-white border-opacity-30 shadow-2xl max-w-md mx-auto">
+              <span className="text-4xl mb-4 block">🎵</span>
+              <p className="text-green-100">
+                Introduce una URL de Mixcloud para comenzar
+              </p>
+            </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
