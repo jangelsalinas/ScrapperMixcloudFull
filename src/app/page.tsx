@@ -32,6 +32,8 @@ export default function Home() {
   const [allEpisodesLoaded, setAllEpisodesLoaded] = useState(false);
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [bulkDownloadProgress, setBulkDownloadProgress] = useState("");
+  const [bulkDownloadPercent, setBulkDownloadPercent] = useState(0);
+  const [progressColor, setProgressColor] = useState("bg-green-400");
 
   const fetchCleanupInfo = async () => {
     try {
@@ -166,6 +168,30 @@ Los archivos se empaquetarán en un archivo ZIP sin comprimir.
 
     setBulkDownloading(true);
     setBulkDownloadProgress("Iniciando descarga masiva...");
+    setBulkDownloadPercent(0);
+
+    // Simulador de progreso
+    const estimatedTimeMs = episodes.length * 30000; // 30 segundos por episodio estimado
+    const updateInterval = 1000; // Actualizar cada segundo
+    const totalSteps = estimatedTimeMs / updateInterval;
+    let currentStep = 0;
+
+    const progressInterval = setInterval(() => {
+      currentStep++;
+      const progress = Math.min((currentStep / totalSteps) * 90, 90); // Máximo 90% durante descarga
+      setBulkDownloadPercent(Math.round(progress));
+      
+      if (progress < 30) {
+        setBulkDownloadProgress(`Descargando episodios... ${Math.round(progress)}%`);
+        setProgressColor("bg-blue-400"); // Azul para descarga
+      } else if (progress < 60) {
+        setBulkDownloadProgress(`Procesando archivos... ${Math.round(progress)}%`);
+        setProgressColor("bg-yellow-400"); // Amarillo para procesamiento
+      } else if (progress < 90) {
+        setBulkDownloadProgress(`Creando archivo ZIP... ${Math.round(progress)}%`);
+        setProgressColor("bg-orange-400"); // Naranja para ZIP
+      }
+    }, updateInterval);
 
     try {
       // Extraer username de la URL
@@ -190,7 +216,13 @@ Los archivos se empaquetarán en un archivo ZIP sin comprimir.
         throw new Error(data.error || "Error en descarga masiva");
       }
 
-      setBulkDownloadProgress("¡Descarga masiva completada! Preparando descarga...");
+      // Limpiar el simulador de progreso
+      clearInterval(progressInterval);
+      
+      // Mostrar progreso final
+      setBulkDownloadPercent(100);
+      setBulkDownloadProgress("¡Completado! Preparando descarga...");
+      setProgressColor("bg-green-400"); // Verde para completado
 
       // Crear enlace para descargar el archivo ZIP
       const link = document.createElement('a');
@@ -218,8 +250,12 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
       console.error("Error en descarga masiva:", err);
       alert(`Error en descarga masiva: ${err instanceof Error ? err.message : "Error desconocido"}`);
     } finally {
+      // Limpiar el simulador de progreso
+      clearInterval(progressInterval);
       setBulkDownloading(false);
       setBulkDownloadProgress("");
+      setBulkDownloadPercent(0);
+      setProgressColor("bg-green-400");
     }
   };
 
@@ -402,27 +438,42 @@ ${data.failedDownloads > 0 ? `\n⚠️ Episodios no descargados:\n${data.failedL
               
               {allEpisodesLoaded && episodes.length > 1 && (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  {bulkDownloading && (
-                    <div className="text-sm text-blue-600 font-medium">
-                      {bulkDownloadProgress}
-                    </div>
-                  )}
-                  <button
-                    onClick={handleBulkDownload}
-                    disabled={bulkDownloading}
-                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {bulkDownloading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Descargando...
-                      </>
-                    ) : (
-                      <>
-                        📦 Descargar Todos (ZIP)
-                      </>
+                  <div className="relative">
+                    <button
+                      onClick={handleBulkDownload}
+                      disabled={bulkDownloading}
+                      className="relative overflow-hidden px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-75 disabled:cursor-not-allowed flex items-center gap-2 min-w-[200px]"
+                    >
+                      {/* Barra de progreso de fondo */}
+                      {bulkDownloading && (
+                        <div 
+                          className={`absolute inset-0 transition-all duration-500 ease-out ${progressColor}`}
+                          style={{ width: `${bulkDownloadPercent}%` }}
+                        />
+                      )}
+                      
+                      {/* Contenido del botón */}
+                      <div className="relative z-10 flex items-center gap-2">
+                        {bulkDownloading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>{bulkDownloadPercent}% - {bulkDownloadProgress.split(' ')[0]}...</span>
+                          </>
+                        ) : (
+                          <>
+                            📦 Descargar Todos (ZIP)
+                          </>
+                        )}
+                      </div>
+                    </button>
+                    
+                    {/* Indicador de progreso adicional debajo del botón */}
+                    {bulkDownloading && (
+                      <div className="mt-1 text-xs text-gray-600 text-center">
+                        {bulkDownloadProgress}
+                      </div>
                     )}
-                  </button>
+                  </div>
                 </div>
               )}
             </div>
